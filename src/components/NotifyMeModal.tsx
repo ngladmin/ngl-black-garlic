@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
+import { mockApiCall } from '../mockServer';
 
 interface NotifyMeModalProps {
   isOpen: boolean;
@@ -31,17 +32,23 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({ isOpen, onClose, p
     setStatus('submitting');
     setErrorMessage('');
     try {
-      const response = await fetch('/api/notify-me', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, productName, abGroup }),
-      });
+      const useMock = import.meta.env.VITE_USE_MOCK_API === 'true';
+      let response;
 
-      const data = await response.json();
+      if (useMock) {
+        response = await mockApiCall('/api/notify-me', { name, email, productName, abGroup });
+      } else {
+        response = await fetch('/api/notify-me', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, productName, abGroup }),
+        });
+      }
 
       if (response.ok) {
         setStatus('success');
       } else {
+        const data = await response.json();
         setStatus('error');
         setErrorMessage(data.error || 'Something went wrong. Please try again.');
       }

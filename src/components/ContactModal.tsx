@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, CheckCircle2 } from 'lucide-react';
+import { mockApiCall } from '../mockServer';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -32,11 +33,18 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) =
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, subject, message }),
-      });
+      const useMock = import.meta.env.VITE_USE_MOCK_API === 'true';
+      let response;
+
+      if (useMock) {
+        response = await mockApiCall('/api/contact', { name, email, subject, message });
+      } else {
+        response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, subject, message }),
+        });
+      }
 
       if (response.ok) {
         setStatus('success');
