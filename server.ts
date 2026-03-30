@@ -11,8 +11,18 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Placeholder Stripe Key (as requested)
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+// Stripe Client Lazy Initialization
+let stripeClient: Stripe | null = null;
+function getStripe(): Stripe {
+  if (!stripeClient) {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) {
+      throw new Error('STRIPE_SECRET_KEY environment variable is required');
+    }
+    stripeClient = new Stripe(key);
+  }
+  return stripeClient;
+}
 
 async function startServer() {
   const app = express();
@@ -88,7 +98,7 @@ async function startServer() {
     try {
       const { priceId, productName, amount } = req.body;
 
-      const session = await stripe.checkout.sessions.create({
+      const session = await getStripe().checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: [
           {
